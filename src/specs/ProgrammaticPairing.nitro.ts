@@ -111,7 +111,7 @@ export interface ProgrammaticPairing extends HybridObject<{
    * agreed so you can show the matching UI.
    */
   addOnBootstrappingListener(
-    listener: (peerId: string, method: BootstrappingMethod) => void
+    listener: (peerId: string, bootstrappingMethod: BootstrappingMethod) => void
   ): ListenerSubscription;
 
   /**

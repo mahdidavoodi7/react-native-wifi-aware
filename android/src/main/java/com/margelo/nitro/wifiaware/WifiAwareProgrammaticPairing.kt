@@ -137,7 +137,7 @@ class WifiAwareProgrammaticPairing : HybridProgrammaticPairingSpec() {
   ): ListenerSubscription = PairingEvents.onPairingRequest(listener)
 
   override fun addOnBootstrappingListener(
-    listener: (peerId: String, method: BootstrappingMethod) -> Unit
+    listener: (peerId: String, bootstrappingMethod: BootstrappingMethod) -> Unit
   ): ListenerSubscription = PairingEvents.onBootstrapping { listener(it.first, it.second) }
 
   override fun initiatePairingWithForeignPeer(
