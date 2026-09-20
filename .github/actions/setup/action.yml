@@ -34,3 +34,10 @@ runs:
           **/node_modules
           .yarn/install-state.gz
         key: ${{ steps.yarn-cache.outputs.cache-primary-key }}
+
+    # `plugin/build` is generated and gitignored, and Yarn does not run the root
+    # workspace's `prepare` on install. Without this, `app.plugin.js` cannot resolve
+    # its entry point and every `expo prebuild`/`expo export` job fails.
+    - name: Build config plugin
+      run: yarn build:plugin
+      shell: bash
