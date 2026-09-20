@@ -57,7 +57,7 @@ export interface ProgrammaticPairing extends HybridObject<{
    */
   requestBootstrapping(
     peerId: string,
-    method: BootstrappingMethod
+    bootstrappingMethod: BootstrappingMethod
   ): Promise<void>;
 
   /**

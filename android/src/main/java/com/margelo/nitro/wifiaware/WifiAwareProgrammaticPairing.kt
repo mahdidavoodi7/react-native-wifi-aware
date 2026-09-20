@@ -79,10 +79,10 @@ class WifiAwareProgrammaticPairing : HybridProgrammaticPairingSpec() {
 
   override fun requestBootstrapping(
     peerId: String,
-    method: BootstrappingMethod,
+    bootstrappingMethod: BootstrappingMethod,
   ): Promise<Unit> {
     val entry = entryFor(peerId)
-    val flag = BootstrappingMethods.flagFor(method)
+    val flag = BootstrappingMethods.flagFor(bootstrappingMethod)
 
     return Promise.parallel {
       // Completion arrives asynchronously on addOnBootstrappingListener; this call only starts the
