@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig",
+  "exclude": [
+    "example",
+    "lib",
+    "plugin",
+    "**/__tests__/**",
+    "**/__mocks__/**"
+  ]
+}

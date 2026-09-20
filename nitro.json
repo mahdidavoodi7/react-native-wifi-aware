@@ -1,0 +1,29 @@
+{
+  "cxxNamespace": [
+    "wifiaware"
+  ],
+  "ios": {
+    "iosModuleName": "WifiAware"
+  },
+  "android": {
+    "androidNamespace": [
+      "wifiaware"
+    ],
+    "androidCxxLibName": "wifiaware"
+  },
+  "autolinking": {
+    "WifiAware": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "WifiAware"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "WifiAware"
+      }
+    }
+  },
+  "ignorePaths": [
+    "**/node_modules"
+  ]
+}

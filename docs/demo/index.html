@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>react-native-wifi-aware — flow animation</title>
+<!--
+  Source of docs/demo.gif and docs/demo.mp4. This is an ILLUSTRATION of the flow, not a device
+  recording. Every visual is a pure function of time — `window.renderAt(seconds)` — so
+  render.mjs can capture it frame by frame. Open this file in a browser to preview it live.
+-->
+<style>
+  :root {
+    --bg: #0f1115; --surface: #181b22; --alt: #20242e; --border: #2b3040;
+    --text: #f2f4f8; --muted: #98a1b3; --accent: #4c8dff; --success: #3ddc97;
+    --warning: #ffb84d; --danger: #ff6b6b;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body {
+    width: 1200px; height: 675px; overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: relative; width: 1200px; height: 675px; background: var(--bg); }
+
+  /* header */
+  #header { position: absolute; left: 60px; right: 60px; top: 34px; height: 40px;
+    display: flex; align-items: center; justify-content: space-between; }
+  #name { font-size: 19px; font-weight: 700; letter-spacing: -0.2px; }
+  #name span { color: var(--muted); font-weight: 500; }
+  #pills { display: flex; gap: 8px; }
+  .pill { font-size: 13px; font-weight: 600; padding: 7px 13px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted); background: var(--surface); }
+  .pill b { font-weight: 700; margin-right: 6px; opacity: .7; }
+
+  /* phones */
+  .phone { position: absolute; top: 118px; width: 236px; height: 450px; border-radius: 38px;
+    background: #07080b; border: 2px solid #343a4b; padding: 7px; }
+  .phone .screen { position: relative; width: 100%; height: 100%; border-radius: 30px;
+    background: var(--bg); overflow: hidden; }
+  .phone .island { position: absolute; top: 9px; left: 50%; width: 62px; height: 17px;
+    margin-left: -31px; border-radius: 10px; background: #000; }
+  #phoneL { left: 164px; }
+  #phoneR { left: 800px; }
+  .role { position: absolute; top: 42px; left: 16px; font-size: 10px; letter-spacing: .9px;
+    font-weight: 700; color: var(--muted); text-transform: uppercase; }
+  .device { position: absolute; top: 57px; left: 16px; font-size: 17px; font-weight: 700; }
+  .card { position: absolute; left: 12px; right: 12px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; }
+  .status { top: 92px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  .slot2 { top: 144px; }
+  .slot3 { top: 208px; }
+  .label { font-size: 10px; letter-spacing: .7px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 15px; }
+  .pin { font-family: var(--mono); font-size: 27px; font-weight: 700; letter-spacing: 3px; margin-top: 6px; }
+  .boxes { display: flex; gap: 5px; margin-top: 8px; }
+  .box { flex: 1; height: 34px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--alt); font-family: var(--mono); font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; }
+  .peerName { font-size: 14px; font-weight: 700; margin-top: 5px; }
+  .tag { display: inline-block; margin-top: 7px; font-size: 10px; font-weight: 700; padding: 3px 7px;
+    border-radius: 6px; color: var(--warning); background: rgba(255,184,77,.12);
+    border: 1px solid rgba(255,184,77,.35); }
+  .paired { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; }
+  .check { width: 20px; height: 20px; border-radius: 50%; background: rgba(61,220,151,.16);
+    color: var(--success); font-size: 12px; font-weight: 800; display: flex; align-items: center;
+    justify-content: center; flex: none; }
+  .thumb { position: relative; height: 104px; border-radius: 8px; overflow: hidden; background: var(--alt); }
+  .thumb svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .fileRow { display: flex; justify-content: space-between; align-items: baseline; margin-top: 9px;
+    font-size: 12px; font-weight: 600; }
+  .fileRow .pct { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+  .bar { height: 5px; border-radius: 3px; background: var(--alt); margin-top: 7px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--accent); }
+
+  /* code chips under each phone */
+  .chip { position: absolute; top: 588px; width: 440px; text-align: center; }
+  .chip code { display: inline-block; font-family: var(--mono); font-size: 13px; color: #cfd6e4;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+    white-space: nowrap; }
+  .chip code em { font-style: normal; color: var(--accent); }
+  #chipL { left: 62px; }
+  #chipR { left: 698px; }
+
+  /* centre column */
+  .centre { position: absolute; left: 420px; width: 360px; text-align: center; }
+  #stepPanel { top: 138px; }
+  #stepTag { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; color: var(--accent); }
+  #stepTitle { font-size: 32px; font-weight: 800; letter-spacing: -0.6px; margin-top: 6px; }
+  #stepDesc { font-size: 15px; line-height: 22px; color: var(--muted); margin-top: 8px; }
+  #intro { top: 176px; }
+  #intro .big { font-size: 25px; font-weight: 800; letter-spacing: -0.4px; line-height: 33px; margin-top: 18px; }
+  #intro .big span { color: var(--muted); }
+  #pathLabel { top: 372px; font-size: 12px; font-weight: 700; letter-spacing: .4px; color: var(--success); }
+  #fx { position: absolute; left: 0; top: 0; }
+
+  /* outro */
+  #outro { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; opacity: 0; }
+  #outro h1 { font-size: 46px; font-weight: 800; letter-spacing: -1px; }
+  #outro p { font-size: 19px; line-height: 28px; color: var(--muted); margin-top: 14px; max-width: 760px; }
+  #outro code { font-family: var(--mono); font-size: 18px; margin-top: 30px; padding: 13px 20px;
+    border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
+  #outro code em { font-style: normal; color: var(--success); }
+  #outro small { font-size: 14px; color: var(--muted); margin-top: 26px; letter-spacing: .2px; }
+  #outro small b { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="header">
+    <div id="name">react-native-wifi-aware <span>· Wi-Fi Aware for React Native</span></div>
+    <div id="pills">
+      <div class="pill"><b>1</b>Discover</div>
+      <div class="pill"><b>2</b>Pair once</div>
+      <div class="pill"><b>3</b>Connect</div>
+      <div class="pill"><b>4</b>Send</div>
+    </div>
+  </div>
+
+  <svg id="fx" width="1200" height="675" viewBox="0 0 1200 675">
+    <defs>
+      <clipPath id="band"><rect x="408" y="283" width="384" height="124"/></clipPath>
+      <linearGradient id="beamGrad" gradientUnits="userSpaceOnUse" x1="404" y1="0" x2="796" y2="0">
+        <stop offset="0" stop-color="#4c8dff"/><stop offset="1" stop-color="#3ddc97"/>
+      </linearGradient>
+    </defs>
+    <g clip-path="url(#band)" fill="none" stroke-width="2.5">
+      <g id="wavesL" stroke="#4c8dff"></g>
+      <g id="wavesR" stroke="#3ddc97"></g>
+    </g>
+    <line id="beamGlow" y1="345" y2="345" stroke="url(#beamGrad)" stroke-width="14" stroke-linecap="round" opacity="0"/>
+    <line id="beam" y1="345" y2="345" stroke="url(#beamGrad)" stroke-width="4" stroke-linecap="round" opacity="0"/>
+    <g id="packets" fill="#f2f4f8"></g>
+  </svg>
+
+  <div id="intro" class="centre">
+    <svg width="150" height="96" viewBox="0 0 150 96" fill="none" stroke="#98a1b3" stroke-width="3.5" stroke-linecap="round">
+      <line x1="48" y1="52" x2="38" y2="16"/><line x1="102" y1="52" x2="112" y2="16"/>
+      <rect x="25" y="52" width="100" height="30" rx="8"/>
+      <circle cx="44" cy="67" r="2.5" fill="#98a1b3"/><circle cx="58" cy="67" r="2.5" fill="#98a1b3"/>
+      <line id="strike" x1="18" y1="90" x2="18" y2="90" stroke="#ff6b6b" stroke-width="5"/>
+    </svg>
+    <div class="big">No router. No access point.<br><span>No internet.</span></div>
+  </div>
+
+  <div id="stepPanel" class="centre">
+    <div id="stepTag"></div>
+    <div id="stepTitle"></div>
+    <div id="stepDesc"></div>
+  </div>
+  <div id="pathLabel" class="centre">🔒&nbsp; ENCRYPTED DATA PATH · DEVICE TO DEVICE</div>
+
+  <div class="phone" id="phoneL"><div class="screen">
+    <div class="island"></div>
+    <div class="role">Publisher</div><div class="device">Device A</div>
+    <div class="card status"><span class="dot" id="dotL"></span><span id="statusL"></span></div>
+    <div class="card slot2" id="pinL"><div class="label">Pairing PIN</div><div class="pin">482 715</div>
+      <div class="hint">Enter this on the other device</div></div>
+    <div class="card slot2 paired" id="pairedL"><span class="check">✓</span>Paired · Device B</div>
+    <div class="card slot3" id="xferL">
+      <div class="thumb"><svg viewBox="0 0 208 104" preserveAspectRatio="none"><use href="#photo"/></svg></div>
+      <div class="fileRow"><span>photo.heic</span><span class="pct" id="pctL"></span></div>
+      <div class="bar"><i id="barL"></i></div>
+    </div>
+  </div></div>
+
+  <div class="phone" id="phoneR"><div class="screen">
+    <div class="island"></div>
+    <div class="role">Subscriber</div><div class="device">Device B</div>
+    <div class="card status"><span class="dot" id="dotR"></span><span id="statusR"></span></div>
+    <div class="card slot2" id="peerR"><div class="label">Peer found</div>
+      <div class="peerName">Device A · _chat._tcp</div><span class="tag">NEEDS PAIRING</span></div>
+    <div class="card slot2" id="pinR"><div class="label">Enter PIN</div>
+      <div class="boxes" id="boxes"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div></div>
+      <div class="hint">Shown on Device A</div></div>
+    <div class="card slot2 paired" id="pairedR"><span class="check">✓</span>Paired · Device A</div>
+    <div class="card slot3" id="xferR">
+      <div class="thumb"><svg id="thumbR" viewBox="0 0 208 104" preserveAspectRatio="none"><use href="#photo"/></svg></div>
+      <div class="fileRow"><span>photo.heic</span><span class="pct" id="pctR"></span></div>
+      <div class="bar"><i id="barR" style="background:var(--success)"></i></div>
+    </div>
+  </div></div>
+
+  <div class="chip" id="chipL"><code></code></div>
+  <div class="chip" id="chipR"><code></code></div>
+
+  <div id="outro">
+    <h1>react-native-wifi-aware</h1>
+    <p>Peer-to-peer discovery and high-bandwidth data paths between nearby devices —
+      no access point, no router, no internet.</p>
+    <code><em>$</em> npm install react-native-wifi-aware</code>
+    <small><b>iOS 26+</b> · <b>Android API 26+</b> · built on Nitro Modules · Apple ↔ Apple · Android ↔ Android</small>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="photo" viewBox="0 0 208 104" preserveAspectRatio="none">
+    <rect width="208" height="104" fill="#27407a"/>
+    <rect y="58" width="208" height="46" fill="#1c2f5c"/>
+    <circle cx="150" cy="34" r="15" fill="#ffb84d"/>
+    <path d="M0 104 L0 78 L46 40 L84 72 L112 50 L160 88 L208 60 L208 104 Z" fill="#3ddc97" opacity=".85"/>
+    <path d="M0 104 L0 92 L60 66 L104 90 L150 74 L208 96 L208 104 Z" fill="#1f8f63"/>
+  </symbol>
+</svg>
+
+<script>
+  const DURATION = 16;
+  const STEPS = [
+    { from: 2.4, to: 5.0, title: 'Discover',
+      desc: 'One device publishes a service, the other subscribes. They find each other over the Wi-Fi Aware radio.',
+      left: "<em>wifiAware</em>.publish({ serviceName: '_chat._tcp' })",
+      right: "<em>wifiAware</em>.subscribe({ serviceName: '_chat._tcp' })" },
+    { from: 5.0, to: 8.2, title: 'Pair once',
+      desc: 'A one-time PIN exchange, driven by a person. The pairing then persists until the user removes it.',
+      left: "<em>wifiAware</em>.presentPairingUI({ role: 'publisher' })",
+      right: "<em>wifiAware</em>.presentPairingUI({ role: 'subscriber' })" },
+    { from: 8.2, to: 10.2, title: 'Connect',
+      desc: 'The radios negotiate an authenticated, encrypted link directly between the two devices.',
+      left: '<em>session</em>.addOnConnectionListener(onConnection)',
+      right: '<em>session</em>.connect(peer.id)' },
+    { from: 10.2, to: 14.2, title: 'Send',
+      desc: 'Zero-copy ArrayBuffers over a real socket, at Wi-Fi speeds.',
+      left: '<em>connection</em>.send(buffer)',
+      right: '<em>connection</em>.addOnMessageListener(onMessage)' },
+  ];
+  const C = { muted: '#98a1b3', accent: '#4c8dff', success: '#3ddc97', warning: '#ffb84d' };
+  const STATUS_L = [[0, 'Idle', C.muted], [2.4, 'Advertising…', C.accent], [5.0, 'Pairing…', C.warning],
+    [7.6, 'Paired', C.success], [8.5, 'Incoming connection…', C.accent], [9.3, 'Connected', C.success],
+    [10.5, 'Sending…', C.accent], [13.6, 'Sent', C.success]];
+  const STATUS_R = [[0, 'Idle', C.muted], [2.6, 'Searching…', C.accent], [3.8, 'Peer found', C.accent],
+    [5.0, 'Pairing…', C.warning], [7.6, 'Paired', C.success], [8.5, 'Connecting…', C.accent],
+    [9.3, 'Connected', C.success], [10.5, 'Receiving…', C.accent], [13.6, 'Received', C.success]];
+  const PIN = '482715';
+
+  const $ = (id) => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const prog = (t, a, b) => ease(clamp((t - a) / (b - a)));
+  const fade = (t, a, b, c, d) => Math.min(prog(t, a, b), 1 - prog(t, c, d));
+  const show = (el, o, dy = 8) => { el.style.opacity = o; el.style.transform = `translateY(${(1 - o) * dy}px)`; };
+  const NS = 'http://www.w3.org/2000/svg';
+  const make = (parent, tag, n) => Array.from({ length: n }, () => parent.appendChild(document.createElementNS(NS, tag)));
+
+  const ringsL = make($('wavesL'), 'circle', 4);
+  const ringsR = make($('wavesR'), 'circle', 4);
+  const packets = make($('packets'), 'rect', 6);
+  packets.forEach((p) => { p.setAttribute('width', 20); p.setAttribute('height', 8); p.setAttribute('rx', 4); p.setAttribute('y', 341); });
+  const pills = [...document.querySelectorAll('.pill')];
+  const boxes = [...$('boxes').children];
+
+  function status(t, table, dot, label) {
+    let row = table[0];
+    for (const r of table) if (t >= r[0]) row = r;
+    label.textContent = row[1];
+    dot.style.background = row[2];
+  }
+
+  function rings(t, els, cx, start) {
+    const env = fade(t, start, start + 0.4, 8.3, 8.9);
+    els.forEach((el, k) => {
+      const phase = (t * 0.55 + k / els.length) % 1;
+      el.setAttribute('cx', cx); el.setAttribute('cy', 345);
+      el.setAttribute('r', 26 + phase * 230);
+      el.setAttribute('opacity', env * Math.pow(1 - phase, 1.3) * 0.75);
+    });
+  }
+
+  window.renderAt = function renderAt(t) {
+    t = ((t % DURATION) + DURATION) % DURATION;
+
+    // header + phones enter
+    $('header').style.opacity = prog(t, 0.2, 0.8);
+    const enter = prog(t, 0, 0.8);
+    $('phoneL').style.opacity = $('phoneR').style.opacity = enter;
+    $('phoneL').style.transform = `translateX(${(enter - 1) * 40}px)`;
+    $('phoneR').style.transform = `translateX(${(1 - enter) * 40}px)`;
+
+    // intro
+    show($('intro'), fade(t, 0.5, 0.9, 2.0, 2.4));
+    const strike = prog(t, 1.0, 1.45);
+    $('strike').setAttribute('x2', 18 + 114 * strike); $('strike').setAttribute('y2', 90 - 80 * strike);
+    $('strike').setAttribute('opacity', strike > 0 ? 1 : 0);
+
+    // steps: pills, centre panel, code chips
+    let active = null, o = 0;
+    STEPS.forEach((s, i) => {
+      const f = fade(t, s.from, s.from + 0.35, s.to - 0.3, s.to);
+      if (f > o) { o = f; active = i; }
+      const on = t >= s.from && t < s.to, done = t >= s.to;
+      pills[i].style.background = on ? C.accent : '';
+      pills[i].style.borderColor = on ? C.accent : done ? 'rgba(61,220,151,.45)' : '';
+      pills[i].style.color = on ? '#fff' : done ? C.success : '';
+    });
+    if (active != null) {
+      const s = STEPS[active];
+      $('stepTag').textContent = `STEP ${active + 1} OF 4`;
+      $('stepTitle').textContent = s.title;
+      $('stepDesc').textContent = s.desc;
+      $('chipL').firstElementChild.innerHTML = s.left;
+      $('chipR').firstElementChild.innerHTML = s.right;
+    }
+    show($('stepPanel'), o); show($('chipL'), o, 6); show($('chipR'), o, 6);
+
+    // phone screens
+    status(t, STATUS_L, $('dotL'), $('statusL'));
+    status(t, STATUS_R, $('dotR'), $('statusR'));
+    show($('peerR'), fade(t, 3.8, 4.1, 5.1, 5.4));
+    show($('pinL'), fade(t, 5.3, 5.7, 7.5, 7.8));
+    show($('pinR'), fade(t, 5.4, 5.8, 7.5, 7.8));
+    const typed = clamp(Math.floor((t - 6.0) / 0.22) + 1, 0, 6);
+    boxes.forEach((b, i) => {
+      b.textContent = i < typed ? PIN[i] : '';
+      b.style.borderColor = i === typed && typed < 6 ? C.accent : '';
+    });
+    show($('pairedL'), prog(t, 7.8, 8.1)); show($('pairedR'), prog(t, 7.8, 8.1));
+    show($('xferL'), prog(t, 10.3, 10.6)); show($('xferR'), prog(t, 10.3, 10.6));
+    const sent = clamp((t - 10.7) / (13.5 - 10.7));
+    const pct = `${Math.round(sent * 100)}%`;
+    $('barL').style.width = $('barR').style.width = pct;
+    $('pctL').textContent = $('pctR').textContent = pct;
+    $('thumbR').style.clipPath = `inset(0 0 ${(1 - sent) * 100}% 0)`;
+
+    // radio waves, data path, packets
+    rings(t, ringsL, 380, 2.4);
+    rings(t, ringsR, 820, 2.6);
+    const drawn = prog(t, 8.5, 9.3);
+    for (const id of ['beam', 'beamGlow']) {
+      $(id).setAttribute('x1', 796); $(id).setAttribute('x2', 796 - 392 * drawn);
+    }
+    $('beam').setAttribute('opacity', drawn > 0 ? 1 : 0);
+    $('beamGlow').setAttribute('opacity', drawn > 0 ? 0.16 + 0.06 * Math.sin(t * 5) : 0);
+    show($('pathLabel'), prog(t, 9.2, 9.6), 4);
+    const flow = fade(t, 10.6, 10.9, 13.4, 13.7);
+    packets.forEach((p, k) => {
+      const phase = ((t - 10.6) * 0.8 + k / packets.length) % 1;
+      p.setAttribute('x', 404 + phase * 372);
+      p.setAttribute('opacity', flow * Math.sin(Math.PI * clamp(phase)) * 0.95);
+    });
+
+    // outro
+    // The backdrop stays opaque to the end so the loop restarts from an empty stage.
+    $('outro').style.opacity = prog(t, 14.2, 14.8);
+    for (const el of $('outro').children) el.style.opacity = 1 - prog(t, 15.6, 16);
+  };
+
+  if (new URLSearchParams(location.search).has('capture')) {
+    window.renderAt(0);
+  } else {
+    const t0 = performance.now();
+    const tick = (now) => { window.renderAt((now - t0) / 1000); requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  }
+</script>
+</body>
+</html>

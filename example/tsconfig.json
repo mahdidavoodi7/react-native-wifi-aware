@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig",
+  "compilerOptions": {
+    // Avoid expo-cli auto-generating a tsconfig
+  },
+  // The root config narrows the library typecheck to shipped sources. Those exclusions are
+  // relative to the repository root and are meaningless here, so reset them.
+  "exclude": []
+}

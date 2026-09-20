@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Declared here so any consuming app inherits them through manifest merging. The Expo config
+       plugin writes the same set, so both bare and managed workflows end up identical. -->
+
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+  <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  <!-- neverForLocation lets the app use Wi-Fi Aware without asking for location. Removing the flag
+       makes ACCESS_FINE_LOCATION mandatory as well. -->
+  <uses-permission
+    android:name="android.permission.NEARBY_WIFI_DEVICES"
+    android:usesPermissionFlags="neverForLocation" />
+
+  <!-- Required only on the older API levels that predate NEARBY_WIFI_DEVICES. -->
+  <uses-permission
+    android:name="android.permission.ACCESS_FINE_LOCATION"
+    android:maxSdkVersion="32" />
+
+  <!-- The library degrades gracefully on devices without the radio, so this must not become an
+       install requirement. -->
+  <uses-feature
+    android:name="android.hardware.wifi.aware"
+    android:required="false" />
+
+</manifest>
