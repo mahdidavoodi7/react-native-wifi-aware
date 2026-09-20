@@ -1,11 +1,17 @@
-# react-native-wifi-aware
+# react-native-wifi-aware: Wi-Fi Aware (NAN) Peer-to-Peer Networking for React Native
+
+[![npm](https://img.shields.io/npm/v/react-native-wifi-aware.svg)](https://www.npmjs.com/package/react-native-wifi-aware)
+[![npm downloads](https://img.shields.io/npm/dm/react-native-wifi-aware.svg)](https://www.npmjs.com/package/react-native-wifi-aware)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![platforms](https://img.shields.io/badge/platforms-iOS%2026%2B%20%7C%20Android-lightgrey.svg)
+[![made by motionary.dev](https://img.shields.io/badge/made%20by-motionary.dev-FEEB00.svg)](https://motionary.dev?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware)
 
 Peer-to-peer discovery and high-bandwidth data paths between nearby devices over **Wi-Fi Aware**
 (NAN) — no access point, no router, no internet.
 
 One TypeScript API over Apple's **WiFiAware** framework (iOS 26+) and Android's
 **`WifiAwareManager`** (API 26+), built on [Nitro Modules](https://nitro.margelo.com) with Swift and
-Kotlin implementations and zero-copy `ArrayBuffer` payloads.
+Kotlin implementations and binary `ArrayBuffer` payloads.
 
 ![Two devices discover each other, pair once with a PIN, open an encrypted data path, and transfer a file](docs/demo.gif)
 
@@ -21,6 +27,8 @@ the real thing is the [example app](example).</sub>
 
 ## Contents
 
+- [Overview](#overview)
+- [Features](#features)
 - [What this is, and what it isn't](#what-this-is-and-what-it-isnt)
 - [What you can build](#what-you-can-build)
 - [Requirements](#requirements)
@@ -31,8 +39,47 @@ the real thing is the [example app](example).</sub>
 - [Performance modes](#performance-modes)
 - [Errors](#errors)
 - [Testing](#testing)
+- [Who made this](#who-made-this)
+- [FAQ](#faq)
+- [Related resources](#related-resources)
 
 ---
+
+## Overview
+
+**react-native-wifi-aware** is a React Native and Expo library for **device-to-device networking over
+Wi-Fi Aware** — the Wi-Fi Alliance standard also known as **NAN (Neighbor Awareness Networking)**. It
+wraps Apple's [WiFiAware framework](https://developer.apple.com/documentation/wifiaware) (iOS 26+) and
+Android's [`WifiAwareManager`](https://developer.android.com/reference/android/net/wifi/aware/WifiAwareManager)
+(API 26+) behind a single typed API, so two nearby devices can discover each other, pair once, and
+then move real payloads at Wi-Fi speeds with no network to join and nothing routed through the
+internet.
+
+It is built on [Nitro Modules](https://nitro.margelo.com) with Swift on iOS and Kotlin on Android,
+ships an Expo config plugin that validates your service names at prebuild, and is written for the
+constraints these APIs actually impose rather than hiding them.
+
+## Features
+
+- 📡 One typed API over Apple's [WiFiAware framework](https://developer.apple.com/documentation/wifiaware) and Android's [`WifiAwareManager`](https://developer.android.com/reference/android/net/wifi/aware/WifiAwareManager)
+- 🚀 **High-bandwidth data paths** — real sockets over a link the radio negotiates, not a Bluetooth-speed trickle
+- 🔐 Authenticated and encrypted by design; the library **refuses to open an unencrypted data path** rather than silently downgrading
+- 🤝 Both pairing models exposed honestly: system-driven [`presentPairingUI()`](#system-driven-pairing-presentpairingui) and app-driven [`getProgrammaticPairing()`](#app-driven-pairing-getprogrammaticpairing) with PIN, passphrase, QR and NFC bootstrapping
+- 📦 Binary payloads over `ArrayBuffer`, length-prefix framed so one `send()` arrives as exactly one `onMessage`
+- 📶 Live link quality — signal strength, throughput ceiling and capacity, per-category transmit latency
+- 🎛️ `'bulk'` and `'realtime'` performance modes, plus per-connection quality-of-service hints
+- 🧭 Structured error codes that keep distinct platform failures tellable apart, each carrying the raw native domain and code
+- 🧩 Expo config plugin for the iOS entitlement, `WiFiAwareServices` Info.plist and Android permissions — and it **fails your build on an invalid service name** instead of letting the app crash at launch
+- 🔥 Powered by [Nitro Modules](https://nitro.margelo.com)
+
+> Wi-Fi Aware is not a general "talk to any nearby device" API. Pairing is mandatory and user-driven,
+> hardware support is per-device rather than per-OS-version, and cross-ecosystem iPhone ↔ Android is
+> not something this library claims. Those constraints are documented here rather than smoothed over.
+
+| Platform             | Backed by                                                               |
+| -------------------- | ----------------------------------------------------------------------- |
+| iOS 26+ / iPadOS 26+ | `WiFiAware` framework, with system-driven pairing and Network framework |
+| Android (API 26+)    | `WifiAwareManager`; data paths need API 29+, pairing API 34+            |
 
 ## What this is, and what it isn't
 
@@ -580,6 +627,79 @@ import { validateServiceName } from 'react-native-wifi-aware'
 expect(validateServiceName('_chat._tcp')).toEqual({ isValid: true })
 ```
 
+## Who made this
+
+Built and maintained by [Mehdi](https://github.com/mahdidavoodi7)
+([@mehdi_made](https://x.com/mehdi_made) on X), the developer behind
+[Motionary](https://motionary.dev?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware),
+a library of premium, production-ready React Native animations and interactions hand-crafted with
+Reanimated, Skia, Gesture Handler and Expo.
+
+This library came out of the far end of that work. A beautifully animated transfer screen is still a
+broken feature if the only way to get a file from one phone to another is a round trip through
+someone's server — and the moment two people are standing next to each other, the network in the
+middle is the slowest part of the product. Wi-Fi Aware removes it. Apple and Google both shipped the
+same Wi-Fi Alliance standard and then disagreed about almost every detail of how you use it, so those
+disagreements are written down here instead of smoothed over.
+
+If you're here for the visual half of the same problem:
+
+- [React Native animations](https://motionary.dev/animations?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware): the drops, copy-paste animation components with the interaction already tuned
+- [Builds](https://motionary.dev/builds?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware): real React Native apps shipped end to end, with the drops inside
+- [Free React Native components](https://motionary.dev/components?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware): a copy-paste reference set
+- [The Motionary blog](https://motionary.dev/blog?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware), including
+  [the best React Native UI libraries in 2026](https://motionary.dev/blog/best-react-native-ui-libraries-2026)
+  and [why shape beats shimmer in skeleton loading](https://motionary.dev/blog/react-native-skeleton-loading)
+
+## FAQ
+
+**Does it work in Expo Go?**
+No. Nitro modules need native code, so Expo Go can never load them. Use a development build (`npx expo prebuild`, then `expo run:ios` / `expo run:android`).
+
+**Can I test this on the iOS Simulator?**
+No, and there is no workaround. Apple's own sample states it outright, and `getCapabilities()` reports `isSupported: false` there. Wi-Fi Aware is device-to-device by definition, so every meaningful test needs **two physical devices** — four if you want to cover both platforms.
+
+**Can an iPhone talk to an Android phone over Wi-Fi Aware?**
+Not as far as anyone has demonstrated, and this library does not claim it. Wi-Fi Aware is a Wi-Fi Alliance standard and Apple's implementation is not closed — Espressif shipped an ESP-IDF component that pairs with iPhones — but iPhone ↔ Android has failed at several independent layers in reported testing, and Android's own `isAwarePairingSupported()` returns `false` on most hardware. See [Interoperability](#interoperability) for the full picture. Apple ↔ Apple and Android ↔ Android are the supported product.
+
+**Do users have to pair every time they connect?**
+No. Pairing happens **once** per pair of devices and persists until a user removes it; after that, connecting is quick. But pairing is **mandatory** — there is no anonymous or opportunistic path to a data path. Apple's Developer Technical Support: *"Is this pairing mandatory? Yes. That's how Wi-Fi Aware works."*
+
+**Which Android devices support Wi-Fi Aware?**
+It is decided per device by the vendor, not by the OS version, so two phones on the same Android release can disagree. Never gate on an API level — call `getCapabilities()` at runtime and branch on `isSupported`. Availability also drops while Wi-Fi is off, or while Wi-Fi Direct, a hotspot or tethering holds the radio.
+
+**Do I need a special entitlement from Apple?**
+Yes. `com.apple.developer.wifi-aware` is a **managed capability** — it does not appear in Xcode until Apple grants it to your account, and a build without it fails at runtime with `'entitlement-missing'`. Request it early; the timeline is not in your control. See [The iOS entitlement needs Apple's approval](#the-ios-entitlement-needs-apples-approval).
+
+**Does my app need location permission on Android?**
+No. This library attaches to the Wi-Fi Aware subsystem in the mode that does not require location, and the config plugin declares `NEARBY_WIFI_DEVICES` with `android:usesPermissionFlags="neverForLocation"`. Drop that flag and you would also have to request `ACCESS_FINE_LOCATION`.
+
+**How is this different from AirDrop, Nearby Share or Multipeer Connectivity?**
+Those are finished features or Apple-only frameworks; this is the transport underneath, available to your own app on both platforms. Wi-Fi Aware gives you an authenticated, encrypted link at Wi-Fi speeds that you move your own bytes over — your protocol, your UI, your payloads — rather than handing a file to a system share sheet.
+
+**Is this the same as Wi-Fi Direct?**
+No. Wi-Fi Direct forms a group with one device acting as an access point. Wi-Fi Aware needs no group, no AP and no association step — devices discover each other continuously at low power and open a data path on demand. On Android the two also compete for the radio, which is why `getAvailability()` can report unavailable while a hotspot or Wi-Fi Direct group is active.
+
+**Does it work without Expo?**
+Yes. The Expo config plugin is a convenience; the [Setup](#setup) section lists the entitlement, Info.plist and `AndroidManifest.xml` entries to add by hand.
+
+## Related resources
+
+- [motionary.dev](https://motionary.dev?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware) — React Native components, animations and guides
+- [Apple: Supercharge device connectivity with Wi-Fi Aware (WWDC25 session 228)](https://developer.apple.com/videos/play/wwdc2025/228/) — the iOS behaviour this library wraps
+- [Apple: Wi-Fi Aware framework documentation](https://developer.apple.com/documentation/wifiaware) and [Adopting Wi-Fi Aware](https://developer.apple.com/documentation/WiFiAware/Adopting-Wi-Fi-Aware)
+- [Android: Wi-Fi Aware guide](https://developer.android.com/develop/connectivity/wifi/wifi-aware) and [`WifiAwareManager` reference](https://developer.android.com/reference/android/net/wifi/aware/WifiAwareManager)
+- [Wi-Fi Alliance: Wi-Fi Aware](https://www.wi-fi.org/discover-wi-fi/wi-fi-aware) — the standard both platforms implement
+- [Nitro Modules](https://nitro.margelo.com) — the native module framework this is built on
+
+## Sponsor
+
+Built and maintained by [**motionary.dev**](https://motionary.dev?utm_source=github&utm_medium=readme&utm_campaign=react-native-wifi-aware) — free, and free to use.
+
+If this saved you a week of reading two platforms' peer-to-peer networking documentation, take a look
+at what else is over there.
+
 ## License
+
 
 MIT

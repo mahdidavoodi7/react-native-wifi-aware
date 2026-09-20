@@ -48,20 +48,25 @@
   },
   "keywords": [
     "react-native",
+    "expo",
     "ios",
     "android",
     "wifi-aware",
     "wi-fi-aware",
     "nan",
     "neighbor-awareness-networking",
+    "wifiawaremanager",
     "peer-to-peer",
     "p2p",
+    "device-to-device",
     "offline",
     "local-network",
     "file-transfer",
+    "nearby",
     "nitro",
     "nitro-modules",
-    "expo"
+    "expo-config-plugin",
+    "ios26"
   ],
   "repository": {
     "type": "git",
